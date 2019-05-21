@@ -39,5 +39,9 @@ class CatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         textView.text = cat.text //загружаем текст в TextView
 
         Glide.with(itemView).load(cat.image).into(imageView)
+
+        itemView.setOnClickListener {
+            DetailActivity.openDetailActivity(itemView.context, cat.text)
+        }
     }
 }
