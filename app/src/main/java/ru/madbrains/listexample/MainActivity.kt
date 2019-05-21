@@ -3,6 +3,8 @@ package ru.madbrains.listexample
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.ResponseBody
 import org.json.JSONArray
@@ -17,7 +19,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initRealm()
+
         getCatsFromServer()
+
+        showListFromDB()
+    }
+
+    private fun initRealm() {
+        Realm.init(this)
+        val config = RealmConfiguration.Builder()
+            //при изменении конфигурации база данных будет пересоздаваться
+            .deleteRealmIfMigrationNeeded()
+            .build()
+        Realm.setDefaultConfiguration(config)
     }
 
     private fun getCatsFromServer() {
@@ -33,9 +48,31 @@ class MainActivity : AppCompatActivity() {
             val responseText = response.body()?.string()
             responseText?.let {
                 val catList = parseResponse(it)
-                setList(catList)
+
+                saveIntoDB(catList)
+                showListFromDB()
             }
         }
+    }
+
+    fun saveIntoDB(cats: List<Cat>) {
+        //получаем ссылку на базу данных
+        val realm = Realm.getDefaultInstance()
+        realm.beginTransaction()
+        //сохраняем список котов в базе данных в транзакции
+        realm.copyToRealm(cats)
+        realm.commitTransaction()
+    }
+
+    fun loadFromDB(): List<Cat> {
+        //получаем ссылку на базу данных
+        val realm = Realm.getDefaultInstance()
+        return realm.where(Cat::class.java).findAll()
+    }
+
+    fun showListFromDB() {
+        val cats = loadFromDB()
+        setList(cats)
     }
 
     private fun parseResponse(responseText: String): List<Cat> {
@@ -52,7 +89,9 @@ class MainActivity : AppCompatActivity() {
             //получаем значение параметра image
             val catImage = jsonObject.getString("image")
             //создаем объект класса Cat с вышеполученными параметрами
-            val cat = Cat(catText, catImage)
+            val cat = Cat()
+            cat.text = catText
+            cat.image = catImage
             catList.add(cat) //добавляем в список
         }
         return catList //возвращаемое значение функции
