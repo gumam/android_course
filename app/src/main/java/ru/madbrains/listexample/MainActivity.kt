@@ -1,41 +1,47 @@
 package ru.madbrains.listexample
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
-import okhttp3.ResponseBody
 import org.json.JSONArray
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
 
 class MainActivity : AppCompatActivity() {
+
+    private val url = "http://www.mocky.io/v2/5ea414024f0000dd4cd9fa52"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        getCatsFromServer()
+        val queue = Volley.newRequestQueue(this)
+        getCatsFromServer(queue)
     }
 
-    private fun getCatsFromServer() {
-        getApi().getCats().enqueue(callback)
-    }
-
-    private val callback = object : Callback<ResponseBody> {
-        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-            t.printStackTrace()
-        }
-
-        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-            val responseText = response.body()?.string()
-            responseText?.let {
-                val catList = parseResponse(it)
-                setList(catList)
+    private fun getCatsFromServer(queue: RequestQueue) {
+        val stringRequest = StringRequest(
+            Request.Method.GET,
+            url,
+            Response.Listener{ response ->
+                handleCatResponse(response)
+            },
+            Response.ErrorListener {
+                Toast.makeText(this, "Ошибка запроса", Toast.LENGTH_SHORT).show()
             }
-        }
+        )
+
+        queue.add(stringRequest)
+    }
+
+    private fun handleCatResponse(jsonCats: String) {
+        val cats = parseResponse(jsonCats)
+        setList(cats)
     }
 
     private fun parseResponse(responseText: String): List<Cat> {
@@ -64,15 +70,5 @@ class MainActivity : AppCompatActivity() {
 
         val layoutManager = LinearLayoutManager(this)
         recyclerViewId.layoutManager = layoutManager
-    }
-
-    private fun getApi(): CatApi {
-        val retrofit = Retrofit.Builder()
-            //Базовая часть адреса
-            .baseUrl("https://api.myjson.com")
-            .build()
-
-        val api = retrofit.create(CatApi::class.java)
-        return api
     }
 }
