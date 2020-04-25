@@ -14,7 +14,7 @@ import org.json.JSONArray
 
 class MainActivity : AppCompatActivity() {
 
-    private val url = "http://www.mocky.io/v2/5ea414024f0000dd4cd9fa52"
+    private val url = "https://raw.githubusercontent.com/gumam/android_course/master/db.json"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
