@@ -33,9 +33,9 @@ class MainActivity : AppCompatActivity() {
 
         )
         val adapter = ColorAdapter(colors)
-        recyclerViewId.adapter = adapter
+        recyclerId.adapter = adapter
 
         val layoutManager = LinearLayoutManager(this)
-        recyclerViewId.layoutManager = layoutManager
+        recyclerId.layoutManager = layoutManager
     }
 }

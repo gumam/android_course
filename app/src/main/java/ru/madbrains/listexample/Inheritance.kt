@@ -15,5 +15,5 @@ open class Human (val name: String): Primate()
 
 fun main () {
     val alexey = Human("Alexey") //создание объекта определенного класса
-    print(alexey.legs()) //использование объекта
+    print(alexey.name) //использование объекта
 }
