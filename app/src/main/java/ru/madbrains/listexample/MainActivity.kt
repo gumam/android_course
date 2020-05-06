@@ -29,7 +29,8 @@ class MainActivity : AppCompatActivity() {
             Request.Method.GET,
             url,
             Response.Listener{ response ->
-                handleCatResponse(response)
+                val catList = parseResponse(response)
+                setList(catList)
             },
             Response.ErrorListener {
                 Toast.makeText(this, "Ошибка запроса", Toast.LENGTH_SHORT).show()
@@ -37,11 +38,6 @@ class MainActivity : AppCompatActivity() {
         )
 
         queue.add(stringRequest)
-    }
-
-    private fun handleCatResponse(jsonCats: String) {
-        val cats = parseResponse(jsonCats)
-        setList(cats)
     }
 
     private fun parseResponse(responseText: String): List<Cat> {
