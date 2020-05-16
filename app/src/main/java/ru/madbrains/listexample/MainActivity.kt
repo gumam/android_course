@@ -9,6 +9,8 @@ import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONArray
 
@@ -20,17 +22,23 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initRealm()
+
         val queue = Volley.newRequestQueue(this)
         getCatsFromServer(queue)
+
+        showListFromDB()
     }
 
     private fun getCatsFromServer(queue: RequestQueue) {
         val stringRequest = StringRequest(
             Request.Method.GET,
             url,
-            Response.Listener{ response ->
+            Response.Listener { response ->
                 val catList = parseResponse(response)
-                setList(catList)
+
+                saveIntoDB(catList)
+                showListFromDB()
             },
             Response.ErrorListener {
                 Toast.makeText(this, "Ошибка запроса", Toast.LENGTH_SHORT).show()
@@ -38,6 +46,35 @@ class MainActivity : AppCompatActivity() {
         )
 
         queue.add(stringRequest)
+    }
+
+    private fun saveIntoDB (cats: List<Cat>) {
+        //получаем ссылку на базу данных
+        val realm = Realm.getDefaultInstance()
+        //сохраняем список котов в базе данных в транзакции
+        realm.beginTransaction()
+        realm.copyToRealm(cats)
+        realm.commitTransaction()
+    }
+
+    private fun loadFromDB (): List<Cat> {
+        //получаем ссылку на базу данных
+        val realm = Realm.getDefaultInstance()
+        return realm.where(Cat::class.java).findAll()
+    }
+
+    private fun showListFromDB () {
+        val cats = loadFromDB()
+        setList(cats)
+    }
+
+    private fun initRealm() {
+        Realm.init(this)
+        val config = RealmConfiguration.Builder()
+            //при изменении конфигурации база данных будет пересоздаваться
+            .deleteRealmIfMigrationNeeded()
+            .build()
+        Realm.setDefaultConfiguration(config)
     }
 
     private fun parseResponse(responseText: String): List<Cat> {
@@ -54,7 +91,10 @@ class MainActivity : AppCompatActivity() {
             //получаем значение параметра image
             val catImage = jsonObject.getString("image")
             //создаем объект класса Cat с вышеполученными параметрами
-            val cat = Cat(catText, catImage)
+            val cat = Cat()
+            cat.text = catText
+            cat.image = catImage
+
             catList.add(cat) //добавляем в список
         }
         return catList //возвращаемое значение функции
